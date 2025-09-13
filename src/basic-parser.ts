@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as readline from "readline";
-
+import {z, ZodType} from "zod";
 /**
  * This is a JSDoc comment. Similar to JavaDoc, it documents a public-facing
  * function for others to use. Most modern editors will show the comment when 
@@ -14,9 +14,22 @@ import * as readline from "readline";
  * @param path The path to the file being loaded.
  * @returns a "promise" to produce a 2-d array of cell values
  */
-export async function parseCSV(path: string): Promise<string[][]> {
+
+//define schema
+export const PersonRowSchema = z
+  .tuple([z.string(), z.coerce.number()])
+  .refine(
+    (tup) => !Number.isNaN(tup[1]),
+    { message: "Age must be a valid number" }
+  )
+  .transform((tup) => ({ name: tup[0], age: tup[1] }));
+
+export type PersonRow = z.infer<typeof PersonRowSchema>
+
+export async function parseCSV<T>(path: string, schema?: ZodType<T>): Promise<T[] | string[][]> {
   // This initial block of code reads from a file in Node.js. The "rl"
   // value can be iterated over in a "for" loop. 
+
   const fileStream = fs.createReadStream(path);
   const rl = readline.createInterface({
     input: fileStream,
@@ -24,14 +37,28 @@ export async function parseCSV(path: string): Promise<string[][]> {
   });
   
   // Create an empty array to hold the results
-  let result = []
+  const result: Array<T | string[]> = [];
   
   // We add the "await" here because file I/O is asynchronous. 
   // We need to force TypeScript to _wait_ for a row before moving on. 
   // More on this in class soon!
+  
   for await (const line of rl) {
     const values = line.split(",").map((v) => v.trim());
-    result.push(values)
+
+    if (schema) {
+      const parsed = schema.safeParse(values);
+
+      if (parsed.success) {
+        const row: T = parsed.data;
+        result.push(row);
+      } else {
+          throw parsed.error;
+      }
+    } else {
+        result.push(values)
+    } 
   }
-  return result
+  
+  return result as T[] | string[][];
 }
