@@ -84,7 +84,7 @@ Consistency across modes: running the parser with no schema always yields string
 2. Random, On-Demand Generation
 I would like to use this function for edge-case testing (if it generate rows with missing values or random whitespace, unusual characters);
 Mostly importantly, this big dataset can 
-Also, I would use it for type stree-testing, where random numbers, strings, and invalid entries are used to check that schema validation consistently accepts or rejects as expected.
+Also, I would use it for type stress-testing, where random numbers, strings, and invalid entries are used to check that schema validation consistently accepts or rejects as expected.
 This kind of testing largely validates the parser's ability as it not only passes tests I wrote.
 
 3. Overall experience, Bugs encountered and resolved
