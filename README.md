@@ -73,16 +73,25 @@ If a value does not match the schema type, parser outputs a clear error with col
 Parser supports common primitive types (string, number, boolean, date).
 Developer can opt-in to either strict mode (fail immediately) or lenient mode (coerce if possible, else warn).
 
+Reflection
+1. What makes a CSV parser “correct”
+each property is checked on basic criteria to decide whether the data should be accepted or not 
+2. Random, On-Demand Generation
+
+3. Overall experience, Bugs encountered and resolved
+
+
 ### Design Choices
 
 
 - #### 3. Overall experience, Bugs encountered and resolved
-#### Errors/Bugs:
-#### Tests:
+#### Errors/Bugs: [Bob, thirty] test keeps passing after I add a schema to the parser
+#### Tests: 
 #### How To…
 
 #### Team members and contributions (include cs logins):
 
 #### Collaborators (cslogins of anyone you worked with on this project and/or generative AI):
-#### Total estimated time it took to complete project:
-#### Link to GitHub Repo:  
+generative AI I used for brainstorming: CHATGPT
+#### Total estimated time it took to complete project: 8 hours
+#### Link to GitHub Repo: https://github.com/xiaoxiaomelody/cs320_sprint1.git

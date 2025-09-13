@@ -15,50 +15,90 @@ import {z, ZodType} from "zod";
  * @returns a "promise" to produce a 2-d array of cell values
  */
 
-//define schema
-export const PersonRowSchema = z
-  .tuple([z.string(), z.coerce.number()])
-  .refine(
-    (tup) => !Number.isNaN(tup[1]),
-    { message: "Age must be a valid number" }
-  )
-  .transform((tup) => ({ name: tup[0], age: tup[1] }));
+export type ParseResult<T> =
+  | { success: true; data: T[] }
+  | { success: false; errors: { row: string[]; message: string }[] };
 
-export type PersonRow = z.infer<typeof PersonRowSchema>
-
-export async function parseCSV<T>(path: string, schema?: ZodType<T>): Promise<T[] | string[][]> {
-  // This initial block of code reads from a file in Node.js. The "rl"
-  // value can be iterated over in a "for" loop. 
-
+export async function parseCSV<T>(
+  path: string,
+  schema?: ZodType<T>
+): Promise<ParseResult<T | string[]>> {
   const fileStream = fs.createReadStream(path);
   const rl = readline.createInterface({
     input: fileStream,
-    crlfDelay: Infinity, // handle different line endings
+    crlfDelay: Infinity,
   });
-  
-  // Create an empty array to hold the results
-  const result: Array<T | string[]> = [];
-  
-  // We add the "await" here because file I/O is asynchronous. 
-  // We need to force TypeScript to _wait_ for a row before moving on. 
-  // More on this in class soon!
-  
+
+  const results: Array<T | string[]> = [];
+  const errors: { row: string[]; message: string }[] = [];
+
   for await (const line of rl) {
     const values = line.split(",").map((v) => v.trim());
 
     if (schema) {
       const parsed = schema.safeParse(values);
-
       if (parsed.success) {
-        const row: T = parsed.data;
-        result.push(row);
+        results.push(parsed.data);
       } else {
-          throw parsed.error;
+        errors.push({
+          row: values,
+          message: parsed.error.issues.map(e => e.message).join("; "),
+        });
       }
     } else {
-        result.push(values)
-    } 
+      results.push(values);
+    }
   }
-  
-  return result as T[] | string[][];
+
+  if (errors.length > 0) {
+    return { success: false, errors };
+  }
+  return { success: true, data: results };
 }
+
+// //define schema
+// export const PersonRowSchema = z
+//   .tuple([z.string(), z.coerce.number()])
+//   .refine(tup => !Number.isNaN(tup[1]), {
+//     message: "Age must be a valid number",
+//   })
+//   .transform(tup => ({ name: tup[0], age: tup[1] }));
+
+// export type PersonRow = z.infer<typeof PersonRowSchema>
+
+// export async function parseCSV<T>(path: string, schema?: ZodType<T>): Promise<T[] | string[][]> {
+//   // This initial block of code reads from a file in Node.js. The "rl"
+//   // value can be iterated over in a "for" loop. 
+
+//   const fileStream = fs.createReadStream(path);
+//   const rl = readline.createInterface({
+//     input: fileStream,
+//     crlfDelay: Infinity, // handle different line endings
+//   });
+  
+//   // Create an empty array to hold the results
+//   const result: Array<T | string[]> = [];
+  
+//   // We add the "await" here because file I/O is asynchronous. 
+//   // We need to force TypeScript to _wait_ for a row before moving on. 
+//   // More on this in class soon!
+  
+//   for await (const line of rl) {
+//     const values = line.split(",").map((v) => v.trim());
+
+//     if (schema) {
+//       const parsed = schema.safeParse(values);
+
+//       if (parsed.success) {
+//         const row: T = parsed.data;
+//         result.push(row);
+//       } else {
+//           throw parsed.error;
+//       }
+//     } else {
+//         result.push(values)
+//     } 
+//   }
+  
+//   return result as T[] | string[][];
+// }
